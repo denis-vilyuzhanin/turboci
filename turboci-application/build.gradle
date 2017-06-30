@@ -1,0 +1,25 @@
+
+
+
+apply plugin: 'distribution'
+
+
+dependencies {
+	compile project(':turboci-agent')
+    compile 'org.apache.commons:commons-lang3:3.3.2'
+    
+}
+
+
+distributions {
+    main {
+        contents {
+            into('lib') {
+                from jar
+                from(project.configurations.runtime)
+            } 
+        }
+    }
+}
+
+
