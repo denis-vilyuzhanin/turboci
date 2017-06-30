@@ -11,6 +11,7 @@ subprojects {
     group = turbociGroup
     version = turbociVersion
     sourceCompatibility = turbociJavaVersion
+    compileJava.options.encoding=projectEncoding
 
     repositories {
         mavenCentral()
