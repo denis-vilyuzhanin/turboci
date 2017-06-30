@@ -1,0 +1,7 @@
+
+
+jar {
+	manifest {
+		attributes ('Premain-Class':'turboci.agent.JavaAgentApplication')
+    }
+}

@@ -1,0 +1,28 @@
+ext {
+    debugPort = project.hasProperty('debugPort') ?  project.hasProperty('debugPort') : '8000'
+	suspendDebug = project.hasProperty('suspendDebug') ?  'y' : 'n'
+}
+
+configurations {
+
+	agentRuntime {
+        transitive false
+    }
+
+}
+
+dependencies {
+	agentRuntime project(':turboci-agent')
+}
+
+task runSample_SimpleCommandLineApplication(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ["-javaagent:$configurations.agentRuntime.singleFile", 
+               "-Xdebug",
+               "-Xrunjdwp:server=y,transport=dt_socket,address=$debugPort,suspend=$suspendDebug"]
+    main = 'turboci.samples.simple.commandline.SimpleCommandLineApplication'
+    doFirst {
+    	println "$suspendDebug"
+    }
+}
+
