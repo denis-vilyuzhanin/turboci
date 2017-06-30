@@ -1,0 +1,21 @@
+
+
+allprojects {
+
+}
+
+
+subprojects {
+    apply plugin: "java"
+  
+    group = turbociGroup
+    version = turbociVersion
+    sourceCompatibility = turbociJavaVersion
+
+    repositories {
+        mavenCentral()
+    }
+
+    apply from:"$rootDir/gradle/testDependencies.gradle"
+}
+
