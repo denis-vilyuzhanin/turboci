@@ -3,6 +3,9 @@
 
 apply plugin: 'distribution'
 
+ext {
+	installationPath = "$project.buildDir/install/turboci"
+}
 
 dependencies {
 	compile project(':turboci-agent')
@@ -12,6 +15,7 @@ dependencies {
 
 distributions {
     main {
+        baseName = 'turboci' 
         contents {
             into('lib') {
                 // uncomment this if you need add turboci-application.jar into distribution
@@ -21,5 +25,8 @@ distributions {
         }
     }
 }
+distTar.enabled = false
+installDist.dependsOn distZip
+
 
 

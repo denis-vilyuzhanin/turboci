@@ -15,9 +15,9 @@ public class JvmAgent {
 		System.out.print("TurboCI JVM Agent ....");
 		try {
 
-			String jarLocation = discoverThisClassJarLocation(JvmAgent.class);
+/*			String jarLocation = discoverThisClassJarLocation(JvmAgent.class);
 			CodeUsageAgentContextClassLoader contextClassLoader = new CodeUsageAgentContextClassLoader(
-					JavaAgentApplication.class.getClassLoader(), jarLocation);
+					JavaAgentApplication.class.getClassLoader(), jarLocation);*/
 		} catch (Throwable e) {
 			e.printStackTrace();
 		}

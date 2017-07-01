@@ -1,5 +1,5 @@
 include 'turboci-agent'
-include 'turboci-application'
+include 'turboci-distribution'
 
 include ':samples:simple-commandline-application'
 project(':samples:simple-commandline-application').projectDir="$rootDir/samples/simple-commandline-application" as File
