@@ -1,7 +1,20 @@
 
-
-jar {
-	manifest {
-		attributes ('Premain-Class':'turboci.agent.JavaAgentApplication')
-    }
+configurations {
+	jvmAgent
 }
+
+task jvmAgentJar(dependsOn: classes, type: Jar) {
+    from sourceSets.main.output
+    include 'turboci/agent/jvm/**'
+    archiveName='turboci-jvmgent.jar'
+	manifest {
+		attributes ('Premain-Class':'turboci.agent.jvm.JvmAgent')
+    }
+    
+}
+
+artifacts {
+    jvmAgent jvmAgentJar
+}
+
+build.dependsOn jvmAgentJar

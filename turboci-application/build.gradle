@@ -6,8 +6,7 @@ apply plugin: 'distribution'
 
 dependencies {
 	compile project(':turboci-agent')
-    compile 'org.apache.commons:commons-lang3:3.3.2'
-    
+    compile project(path: ':turboci-agent', configuration: 'jvmAgent')
 }
 
 
@@ -15,7 +14,8 @@ distributions {
     main {
         contents {
             into('lib') {
-                from jar
+                // uncomment this if you need add turboci-application.jar into distribution
+                // from jar
                 from(project.configurations.runtime)
             } 
         }
