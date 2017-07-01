@@ -3,6 +3,8 @@ configurations {
 	jvmAgent
 }
 
+apply from: "$rootDir/gradle/agentDependencies.gradle"
+
 task jvmAgentJar(dependsOn: classes, type: Jar) {
     from sourceSets.main.output
     include 'turboci/agent/jvm/**'

@@ -34,7 +34,8 @@ public class JvmAgent {
 			URL[] classpath = discoverAgentClasspath(jarLocationPath);
 			
 			//should we really close this loader ???
-			URLClassLoader agentClassLoader = new URLClassLoader(classpath, JvmAgent.class.getClassLoader());
+			ClassLoader agentClassLoader = 
+					new JvmAgentIsolatedClassloader(classpath, JvmAgent.class.getClassLoader());
 			
 			Runnable laucher = createLaucherInstance(instrumentation, jarLocationPath, agentClassLoader);
 			laucher.run();
@@ -45,7 +46,7 @@ public class JvmAgent {
 	}
 
 	private static Runnable createLaucherInstance(Instrumentation instrumentation, Path jarLocationPath,
-			URLClassLoader agentClassLoader) throws ClassNotFoundException, InstantiationException,
+			ClassLoader agentClassLoader) throws ClassNotFoundException, InstantiationException,
 			IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		Class<?> laucherClass =  agentClassLoader.loadClass("turboci.agent.AgentLaucher");
 		Runnable laucher = (Runnable) laucherClass.getConstructor(Path.class,
