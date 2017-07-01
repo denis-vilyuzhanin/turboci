@@ -1,11 +1,14 @@
 package turboci.agent;
 
 import java.lang.instrument.Instrumentation;
+import java.nio.file.Path;
 import java.util.Map;
 
 public class AgentLaucher implements Runnable {
 
-	public AgentLaucher(Map<String, Object> parameters, Instrumentation instrumentation) {
+	public AgentLaucher(Path jvmAgentJarLocation,
+			            Map<String, Object> parameters, 
+			            Instrumentation instrumentation) {
 		
 	}
 

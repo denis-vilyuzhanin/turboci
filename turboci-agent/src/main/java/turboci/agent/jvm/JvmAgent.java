@@ -3,6 +3,7 @@ package turboci.agent.jvm;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -17,33 +18,52 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.StreamSupport;
 
 public class JvmAgent {
-
-	public static void premain(String agentArgs, Instrumentation inst) {
-		System.out.println("TurboCI JVM Agent: ");
+	
+	private static final Logger LOG = Logger.getLogger(JvmAgent.class.getName());
+	
+	public static void premain(String agentArgs, Instrumentation instrumentation) {
+		LOG.setLevel(Level.INFO);
+		LOG.info("TurboCI JVM Agent");
 		try {
-
 			Path jarLocationPath = discoverThisClassJarLocation(JvmAgent.class);
-			Path turbociLibsPath = jarLocationPath.getParent();
-			Path turbociHomePath = turbociLibsPath.getParent();
-			System.out.println("\tHome: " + turbociHomePath);
-			System.out.println("\tLibraries: " + turbociLibsPath);
-			URL[] classpath = buildAgentClasspath(turbociLibsPath, jarLocationPath);
-			System.out.println("\tClasspath: " + Arrays.toString(classpath));
+			URL[] classpath = discoverAgentClasspath(jarLocationPath);
 			
 			//should we really close this loader ???
 			URLClassLoader agentClassLoader = new URLClassLoader(classpath, JvmAgent.class.getClassLoader());
 			
-			Class<?> laucherClass =  agentClassLoader.loadClass("turboci.agent.AgentLaucher");
-			Runnable laucher = (Runnable) laucherClass.getConstructor(Map.class, Instrumentation.class)
-			                                          .newInstance(Collections.emptyMap(), inst);
+			Runnable laucher = createLaucherInstance(instrumentation, jarLocationPath, agentClassLoader);
 			laucher.run();
 		} catch (Throwable e) {
-			e.printStackTrace();
+			LOG.log(Level.SEVERE, "TurboCI JVM agent failed", e); 
 		}
 
+	}
+
+	private static Runnable createLaucherInstance(Instrumentation instrumentation, Path jarLocationPath,
+			URLClassLoader agentClassLoader) throws ClassNotFoundException, InstantiationException,
+			IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		Class<?> laucherClass =  agentClassLoader.loadClass("turboci.agent.AgentLaucher");
+		Runnable laucher = (Runnable) laucherClass.getConstructor(Path.class,
+				                                                  Map.class, 
+				                                                  Instrumentation.class)
+		                                          .newInstance(jarLocationPath, 
+		                                        		       Collections.emptyMap(), 
+		                                        		       instrumentation);
+		return laucher;
+	}
+
+	private static URL[] discoverAgentClasspath(Path jarLocationPath) throws IOException {
+		Path turbociLibsPath = jarLocationPath.getParent();
+		LOG.info(() -> "Libraries Folder: " + turbociLibsPath);
+		
+		URL[] classpath = buildAgentClasspath(turbociLibsPath, jarLocationPath);
+		LOG.info(() -> "Classpath: " + Arrays.toString(classpath));
+		return classpath;
 	}
 	
 	private static URL[] buildAgentClasspath(Path librariesPath, Path jarLocationPath) throws IOException {
@@ -101,7 +121,9 @@ public class JvmAgent {
 		try {
 			String fileName = URLDecoder.decode(uri.substring("jar:file:/".length(), idx),
 					Charset.defaultCharset().name());
-			return Paths.get(fileName).toAbsolutePath();
+			Path jarLocation = Paths.get(fileName).toAbsolutePath();
+			LOG.info(()->"JVM Agent jar location: " + jarLocation);
+			return jarLocation;
 		} catch (UnsupportedEncodingException e) {
 			throw new InternalError("default charset doesn't exist. Your VM is borked.");
 		}

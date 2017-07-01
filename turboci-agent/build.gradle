@@ -6,6 +6,7 @@ configurations {
 task jvmAgentJar(dependsOn: classes, type: Jar) {
     from sourceSets.main.output
     include 'turboci/agent/jvm/**'
+    include 'logging-jvmagent.properties'
     archiveName='turboci-jvmgent.jar'
 	manifest {
 		attributes ('Premain-Class':'turboci.agent.jvm.JvmAgent')
