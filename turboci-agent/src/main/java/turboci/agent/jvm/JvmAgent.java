@@ -1,27 +1,69 @@
 package turboci.agent.jvm;
 
-import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.instrument.Instrumentation;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
-
-import turboci.agent.CodeUsageAgentContextClassLoader;
-import turboci.agent.JavaAgentApplication;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.StreamSupport;
 
 public class JvmAgent {
 
 	public static void premain(String agentArgs, Instrumentation inst) {
-		System.out.print("TurboCI JVM Agent ....");
+		System.out.println("TurboCI JVM Agent: ");
 		try {
 
-/*			String jarLocation = discoverThisClassJarLocation(JvmAgent.class);
-			CodeUsageAgentContextClassLoader contextClassLoader = new CodeUsageAgentContextClassLoader(
-					JavaAgentApplication.class.getClassLoader(), jarLocation);*/
+			Path jarLocationPath = discoverThisClassJarLocation(JvmAgent.class);
+			Path turbociLibsPath = jarLocationPath.getParent();
+			Path turbociHomePath = turbociLibsPath.getParent();
+			System.out.println("\tHome: " + turbociHomePath);
+			System.out.println("\tLibraries: " + turbociLibsPath);
+			URL[] classpath = buildAgentClasspath(turbociLibsPath, jarLocationPath);
+			System.out.println("\tClasspath: " + Arrays.toString(classpath));
+			
+			//should we really close this loader ???
+			URLClassLoader agentClassLoader = new URLClassLoader(classpath, JvmAgent.class.getClassLoader());
+			
+			Class<?> laucherClass =  agentClassLoader.loadClass("turboci.agent.AgentLaucher");
+			Runnable laucher = (Runnable) laucherClass.getConstructor(Map.class, Instrumentation.class)
+			                                          .newInstance(Collections.emptyMap(), inst);
+			laucher.run();
 		} catch (Throwable e) {
 			e.printStackTrace();
 		}
 
+	}
+	
+	private static URL[] buildAgentClasspath(Path librariesPath, Path jarLocationPath) throws IOException {
+		List<URL> urls = new ArrayList<>();
+		try (DirectoryStream<Path> jars = Files.newDirectoryStream(librariesPath, "*.jar")) {
+			StreamSupport.stream(jars.spliterator(), false)
+			             .filter(jarPath -> !jarPath.equals(jarLocationPath))
+			             .map(JvmAgent::toURL)
+			             .forEach(urls::add);
+			
+		}
+		return urls.toArray(new URL[urls.size()]);
+	}
+	
+	private static URL toURL(Path path) {
+		try {
+			return path.toUri().toURL();
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -31,7 +73,7 @@ public class JvmAgent {
 	 * @return
 	 * @throws IllegalStateException
 	 */
-	private static String discoverThisClassJarLocation(Class<?> context) throws IllegalStateException {
+	private static Path discoverThisClassJarLocation(Class<?> context) throws IllegalStateException {
 
 		String classFileName = toClassFileName(context.getName());
 
@@ -47,7 +89,7 @@ public class JvmAgent {
 			throw new IllegalStateException("This class has been loaded remotely via the " + protocol
 					+ " protocol. Only loading from a jar on the local file system is supported.");
 		}
-		System.out.println("[" + uri + "]");
+		
 		int idx = uri.indexOf('!');
 		// As far as I know, the if statement below can't ever trigger, so it's
 		// more of a sanity check thing.
@@ -57,9 +99,9 @@ public class JvmAgent {
 		}
 
 		try {
-			String fileName = URLDecoder.decode(uri.substring("jar:file:".length(), idx),
+			String fileName = URLDecoder.decode(uri.substring("jar:file:/".length(), idx),
 					Charset.defaultCharset().name());
-			return new File(fileName).getAbsolutePath();
+			return Paths.get(fileName).toAbsolutePath();
 		} catch (UnsupportedEncodingException e) {
 			throw new InternalError("default charset doesn't exist. Your VM is borked.");
 		}
