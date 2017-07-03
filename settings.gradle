@@ -1,3 +1,4 @@
+include 'turboci-instrumentation'
 include 'turboci-agent'
 include 'turboci-distribution'
 

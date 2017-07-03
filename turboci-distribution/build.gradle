@@ -12,16 +12,13 @@ dependencies {
     compile project(path: ':turboci-agent', configuration: 'jvmAgent')
 }
 
-apply from:"$rootDir/gradle/agentDependencies.gradle"
-
-
 distributions {
     main {
         baseName = 'turboci' 
         contents {
             into('lib') {
                 // uncomment this if you need add turboci-application.jar into distribution
-                // from jar
+                // from (jar)
                 from(project.configurations.runtime)
             } 
         }

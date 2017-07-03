@@ -3,7 +3,11 @@ configurations {
 	jvmAgent
 }
 
-apply from: "$rootDir/gradle/agentDependencies.gradle"
+dependencies {
+	compile project(':turboci-instrumentation')
+	
+	compile 'com.google.inject:guice:4.1.0'
+}
 
 task jvmAgentJar(dependsOn: classes, type: Jar) {
     from sourceSets.main.output

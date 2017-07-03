@@ -17,6 +17,7 @@ subprojects {
         mavenCentral()
     }
 
+	apply from:"$rootDir/gradle/commonDependencies.gradle"
     apply from:"$rootDir/gradle/testDependencies.gradle"
 }
 
