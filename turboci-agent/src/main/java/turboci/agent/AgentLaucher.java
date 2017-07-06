@@ -6,18 +6,31 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+
+import turboci.agent.modules.InstrumentationModule;
+
 
 public class AgentLaucher implements Runnable {
 
+	private Path jvmAgentJarLocation;
+	private Map<String, Object> parameters;
+	private Instrumentation instrumentation;
+	
 	public AgentLaucher(Path jvmAgentJarLocation,
 			            Map<String, Object> parameters, 
 			            Instrumentation instrumentation) {
+		this.jvmAgentJarLocation = jvmAgentJarLocation;
+		this.parameters = parameters;
+		this.instrumentation = instrumentation;
 		
 	}
 
 	@Override
 	public void run() {
-		System.out.println(StringUtils.center("TurboCI agent has started", 127));
+		Guice.createInjector(new InstrumentationModule(instrumentation));
+		System.out.println("TurboCI Agent has started");
 	}
 	
 	
