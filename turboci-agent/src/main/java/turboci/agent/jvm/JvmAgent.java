@@ -37,7 +37,10 @@ public class JvmAgent {
 			ClassLoader agentClassLoader = 
 					new JvmAgentIsolatedClassloader(classpath, JvmAgent.class.getClassLoader());
 			
-			Runnable laucher = createLaucherInstance(instrumentation, jarLocationPath, agentClassLoader);
+			Runnable laucher = createLaucherInstance(JvmAgent.class.getClassLoader(), 
+					                                 instrumentation, 
+					                                 jarLocationPath, 
+					                                 agentClassLoader);
 			laucher.run();
 		} catch (Throwable e) {
 			LOG.log(Level.SEVERE, "TurboCI JVM agent failed", e); 
@@ -45,17 +48,23 @@ public class JvmAgent {
 
 	}
 
-	private static Runnable createLaucherInstance(Instrumentation instrumentation, Path jarLocationPath,
-			ClassLoader agentClassLoader) throws ClassNotFoundException, InstantiationException,
-			IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	private static Runnable createLaucherInstance(ClassLoader classLoader, 
+			                                      Instrumentation instrumentation, 
+			                                      Path jarLocationPath,
+			                                      ClassLoader agentClassLoader) throws ClassNotFoundException, 
+	                                                                                   InstantiationException,
+			                                                                           IllegalAccessException, 
+			                                                                           InvocationTargetException, 
+			                                                                           NoSuchMethodException {
 		Class<?> laucherClass =  agentClassLoader.loadClass("turboci.agent.AgentLaucher");
-		Runnable laucher = (Runnable) laucherClass.getConstructor(Path.class,
-				                                                  Map.class, 
-				                                                  Instrumentation.class)
-		                                          .newInstance(jarLocationPath, 
-		                                        		       Collections.emptyMap(), 
-		                                        		       instrumentation);
-		return laucher;
+		return (Runnable) laucherClass.getConstructor(ClassLoader.class,
+				                                      Path.class,
+				                                      Map.class, 
+				                                      Instrumentation.class)
+				                      .newInstance(classLoader,
+				                    		       jarLocationPath, 
+		                                           Collections.emptyMap(), 
+		                                           instrumentation);
 	}
 
 	private static URL[] discoverAgentClasspath(Path jarLocationPath) throws IOException {

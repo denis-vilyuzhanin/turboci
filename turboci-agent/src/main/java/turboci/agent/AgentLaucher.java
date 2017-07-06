@@ -17,10 +17,13 @@ public class AgentLaucher implements Runnable {
 	private Path jvmAgentJarLocation;
 	private Map<String, Object> parameters;
 	private Instrumentation instrumentation;
+	private ClassLoader rootClassPath;
 	
-	public AgentLaucher(Path jvmAgentJarLocation,
+	public AgentLaucher(ClassLoader rootClassPath, 
+			            Path jvmAgentJarLocation,
 			            Map<String, Object> parameters, 
 			            Instrumentation instrumentation) {
+		this.rootClassPath = rootClassPath;
 		this.jvmAgentJarLocation = jvmAgentJarLocation;
 		this.parameters = parameters;
 		this.instrumentation = instrumentation;
@@ -29,7 +32,7 @@ public class AgentLaucher implements Runnable {
 
 	@Override
 	public void run() {
-		Guice.createInjector(new InstrumentationModule(instrumentation));
+		Guice.createInjector(new InstrumentationModule(rootClassPath, instrumentation));
 		System.out.println("TurboCI Agent has started");
 	}
 	
