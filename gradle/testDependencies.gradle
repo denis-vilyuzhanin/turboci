@@ -4,7 +4,8 @@ dependencies {
    testCompile 'org.mockito:mockito-core:2.8.47'   
    
     // JUnit Jupiter API and TestEngine implementation
-    testCompile("org.junit.jupiter:junit-jupiter-api:5.0.0-M5")
-    testRuntime("org.junit.jupiter:junit-jupiter-engine:5.0.0-M5")
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0-M5'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M5'
+    testCompile 'org.junit.platform:junit-platform-runner:1.0.0-M5'
    
 }
