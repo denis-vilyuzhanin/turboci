@@ -70,15 +70,6 @@ public class AsmClassUsageInstrumentation implements ClassUsageInstrumentation{
 			
 			super.visitCode();
 		}
-
-		@Override
-		public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-			if ("callback".equals(name)) {
-				System.out.println("!!!!!");
-			}
-			super.visitMethodInsn(opcode, owner, name, desc, itf);
-		}
-		
 		
 	}
 
