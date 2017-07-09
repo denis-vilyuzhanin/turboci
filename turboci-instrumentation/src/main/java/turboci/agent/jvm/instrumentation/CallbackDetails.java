@@ -6,7 +6,7 @@ public class CallbackDetails {
 
 	private String callbackClassName;
 	private String methodName;
-	private boolean isStatic;
+	private Class<?> resultType = Void.class; 
 	private List<Object> arguments;
 	
 	public String getCallbackClassName() {
@@ -27,15 +27,6 @@ public class CallbackDetails {
 		return this;
 	}
 	
-	public boolean isStatic() {
-		return isStatic;
-	}
-	
-	public CallbackDetails setStatic(boolean isStatic) {
-		this.isStatic = isStatic;
-		return this;
-	}
-	
 	public List<Object> getArguments() {
 		return arguments;
 	}
@@ -43,6 +34,17 @@ public class CallbackDetails {
 		this.arguments = arguments;
 		return this;
 	}
+
+	public Class<?> getResultType() {
+		return resultType;
+	}
+
+	public CallbackDetails setResultType(Class<?> resultType) {
+		this.resultType = resultType;
+		return this;
+	}
+	
+	
 	
 	
 }

@@ -24,14 +24,13 @@ public class AsmClassUsageInstrumentationTest {
 	@BeforeEach
 	public void createInstrumentation() {
 		instrumentation = new AsmClassUsageInstrumentation();
-		instrumentation.setDumpInstrumentedCodeToStdOut(true);
+		//instrumentation.setDumpInstrumentedCodeToStdOut(true);
 	}
 	
 	@BeforeEach
 	public void createCallbackDetails() {
 		callbackDetails = new CallbackDetails()
 				              .setCallbackClassName(ThreadCallbackHandler.class.getName())
-				              .setStatic(true)
 				              .setMethodName("callback");
 	}
 	

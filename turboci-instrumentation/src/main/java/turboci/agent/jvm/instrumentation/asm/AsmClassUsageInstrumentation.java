@@ -19,6 +19,7 @@ public class AsmClassUsageInstrumentation implements ClassUsageInstrumentation{
 	
 	@Override
 	public byte[] instrument(byte[] originalCode, CallbackDetails callback) {
+		StaticMethodCall callbackMethodCall = new StaticMethodCall(callback);
 	    ClassReader cr = new ClassReader(originalCode);
 	    ClassWriter cw = new ClassWriter(cr, 0);
 	    ClassVisitor finalVisitor = cw;
@@ -26,35 +27,35 @@ public class AsmClassUsageInstrumentation implements ClassUsageInstrumentation{
 	    	PrintWriter pw = new PrintWriter(System.out);
 	    	finalVisitor = new TraceClassVisitor(cw, pw);
 	    }
-	    cr.accept(new AddClassUsageCallbacksTransformation(finalVisitor, callback), 0);
+	    cr.accept(new AddClassUsageCallbacksTransformation(finalVisitor, callbackMethodCall), 0);
         return cw.toByteArray();
 	}
 
 	
 	static class AddClassUsageCallbacksTransformation extends ClassVisitor {
 
-		private CallbackDetails callbackDetails;
+		private StaticMethodCall callbackMethodCall;
 		
-		public AddClassUsageCallbacksTransformation(ClassVisitor cv, CallbackDetails callbackDetails) {
+		public AddClassUsageCallbacksTransformation(ClassVisitor cv, StaticMethodCall callbackMethodCall) {
 			super(Opcodes.ASM5, cv);
-			this.callbackDetails = callbackDetails;
+			this.callbackMethodCall = callbackMethodCall;
 		}
 
 		@Override
 		public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 			MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
-			return new AddMethodCallbackMethodTransformer(callbackDetails, methodVisitor);
+			return new AddMethodCallbackMethodTransformer(callbackMethodCall, methodVisitor);
 		}
 		
 	}
 	
 	static class AddMethodCallbackMethodTransformer extends MethodVisitor {
 
-		private CallbackDetails callbackDetails;
+		private StaticMethodCall callbackMethodCall;
 		
-		public AddMethodCallbackMethodTransformer(CallbackDetails callbackDetails, MethodVisitor mv) {
+		public AddMethodCallbackMethodTransformer(StaticMethodCall callbackMethodCall, MethodVisitor mv) {
 			super(Opcodes.ASM5, mv);
-			this.callbackDetails = callbackDetails;
+			this.callbackMethodCall = callbackMethodCall;
 		}
 
 		@Override
@@ -62,9 +63,9 @@ public class AsmClassUsageInstrumentation implements ClassUsageInstrumentation{
 			Label usageCallbackLabel = new Label();
 			mv.visitLabel(usageCallbackLabel);
 			mv.visitMethodInsn(Opcodes.INVOKESTATIC, 
-					           "turboci/agent/jvm/instrumentation/asm/ThreadCallbackHandler", 
-					           "callback", 
-					           "()V", 
+					           callbackMethodCall.getClassName(), 
+					           callbackMethodCall.getMethodName(), 
+					           callbackMethodCall.getDescription(), 
 					           false);
 			super.visitCode();
 		}
