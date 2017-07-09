@@ -21,7 +21,7 @@ public class AsmClassUsageInstrumentation implements ClassUsageInstrumentation{
 	public byte[] instrument(byte[] originalCode, CallbackDetails callback) {
 		StaticMethodCall callbackMethodCall = new StaticMethodCall(callback);
 	    ClassReader cr = new ClassReader(originalCode);
-	    ClassWriter cw = new ClassWriter(cr, 0);
+	    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
 	    ClassVisitor finalVisitor = cw;
 	    if (dumpInstrumentedCodeToStdOut) {
 	    	PrintWriter pw = new PrintWriter(System.out);
@@ -62,6 +62,16 @@ public class AsmClassUsageInstrumentation implements ClassUsageInstrumentation{
 		public void visitCode() {
 			Label usageCallbackLabel = new Label();
 			mv.visitLabel(usageCallbackLabel);
+			
+			for(Object argument : callbackMethodCall.getArguments()) {
+				if (Boolean.class.equals(argument.getClass())) {
+					Boolean booleanValue = (Boolean) argument;
+					mv.visitInsn(booleanValue ? Opcodes.ICONST_1 : Opcodes.ICONST_0);
+				} else {
+					mv.visitLdcInsn(argument);
+				}
+			}
+			
 			mv.visitMethodInsn(Opcodes.INVOKESTATIC, 
 					           callbackMethodCall.getClassName(), 
 					           callbackMethodCall.getMethodName(), 

@@ -1,5 +1,8 @@
 package turboci.agent.jvm.instrumentation.asm;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -10,24 +13,36 @@ import turboci.agent.jvm.instrumentation.CallbackDetails;
 class StaticMethodCall {
 	
 	private static final Map<String, String> TYPES = 
-			ImmutableMap.of("java.lang.Void", "V");
+			ImmutableMap.of("java.lang.Void", "V",
+					        "java.lang.String", "Ljava/lang/String;",
+					        "java.lang.Integer", "I",
+					        "java.lang.Long", "J",
+					        "java.lang.Boolean", "Z");
 
 	private static final Pattern CONVERT_CLASS_NAME_PATTERN = Pattern.compile("[.]");
 	private String className;
 	private String methodName;
 	private String description;
-	
+	private List<Object> arguments;
 	
 	public StaticMethodCall(CallbackDetails callback) {
 		this.className = CONVERT_CLASS_NAME_PATTERN.matcher(callback.getCallbackClassName())
 				                                   .replaceAll("/");
 		this.methodName = callback.getMethodName();
 		this.description = createDescription(callback);
+		this.arguments = Collections.unmodifiableList(new ArrayList<>(callback.getArguments()));
 	}
 	
 	private String createDescription(CallbackDetails callback) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("(");
+		for(Object argument : callback.getArguments()) {
+			String typeDescription = TYPES.get(argument.getClass().getName());
+			if (typeDescription == null) {
+				throw new IllegalArgumentException("Unsupported argument type: " + typeDescription);
+			}
+			builder.append(typeDescription);
+		}
 		builder.append(")");
 		
 		builder.append("V");
@@ -48,6 +63,11 @@ class StaticMethodCall {
 	public String getDescription() {
 		return description;
 	}
+
+	public List<Object> getArguments() {
+		return arguments;
+	}
+	
 	
 	
 }
