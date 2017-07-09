@@ -6,7 +6,6 @@ public class CallbackDetails {
 
 	private String callbackClassName;
 	private String methodName;
-	private Class<?> resultType = Void.class; 
 	private List<Object> arguments;
 	
 	public String getCallbackClassName() {
@@ -34,17 +33,5 @@ public class CallbackDetails {
 		this.arguments = arguments;
 		return this;
 	}
-
-	public Class<?> getResultType() {
-		return resultType;
-	}
-
-	public CallbackDetails setResultType(Class<?> resultType) {
-		this.resultType = resultType;
-		return this;
-	}
-	
-	
-	
 	
 }

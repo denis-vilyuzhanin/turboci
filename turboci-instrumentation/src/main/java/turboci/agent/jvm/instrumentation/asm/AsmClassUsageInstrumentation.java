@@ -67,8 +67,19 @@ public class AsmClassUsageInstrumentation implements ClassUsageInstrumentation{
 					           callbackMethodCall.getMethodName(), 
 					           callbackMethodCall.getDescription(), 
 					           false);
+			
 			super.visitCode();
 		}
+
+		@Override
+		public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+			if ("callback".equals(name)) {
+				System.out.println("!!!!!");
+			}
+			super.visitMethodInsn(opcode, owner, name, desc, itf);
+		}
+		
+		
 	}
 
 	public boolean isDumpInstrumentedCodeToStdOut() {

@@ -11,7 +11,8 @@ public class ClassUtils {
 
 	
 	public static byte[] loadClassByteCode(Class<?> clazz) {
-		try (InputStream input = clazz.getResourceAsStream(clazz.getSimpleName() + ".class")) {
+		String className = clazz.getName().substring(clazz.getName().lastIndexOf(".") + 1);
+		try (InputStream input = clazz.getResourceAsStream(className + ".class")) {
 			return IOUtils.toByteArray(input);
 		} catch (IOException e) {
 			throw new RuntimeException(e);

@@ -9,6 +9,7 @@ public class ThreadCallbackHandler {
 	}
 	
 	public static void callback() {
+		System.out.println("Callback: "+ Thread.currentThread().toString());
 		isInvoked.set(true);
 	}
 	

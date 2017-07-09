@@ -30,7 +30,7 @@ class StaticMethodCall {
 		builder.append("(");
 		builder.append(")");
 		
-		builder.append(TYPES.get(callback.getResultType().getName()));
+		builder.append("V");
 		return builder.toString();
 	}
 
