@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import com.google.common.collect.ImmutableMap;
 
+import turboci.agent.jvm.instrumentation.CallbackCallArgumentValueGenerator;
 import turboci.agent.jvm.instrumentation.CallbackDetails;
 
 class StaticMethodCall {
@@ -37,7 +38,8 @@ class StaticMethodCall {
 		StringBuilder builder = new StringBuilder();
 		builder.append("(");
 		for(Object argument : callback.getArguments()) {
-			String typeDescription = TYPES.get(argument.getClass().getName());
+			Class<?> argumentType = determinArgumentType(argument);
+			String typeDescription = TYPES.get(argumentType.getName());
 			if (typeDescription == null) {
 				throw new IllegalArgumentException("Unsupported argument type: " + typeDescription);
 			}
@@ -47,6 +49,14 @@ class StaticMethodCall {
 		
 		builder.append("V");
 		return builder.toString();
+	}
+
+	private Class<?> determinArgumentType(Object argument) {
+		Class<?> argumentType = argument.getClass();
+		if (argument instanceof CallbackCallArgumentValueGenerator) {
+			argumentType = ((CallbackCallArgumentValueGenerator) argument).getValueType();
+		}
+		return argumentType;
 	}
 
 

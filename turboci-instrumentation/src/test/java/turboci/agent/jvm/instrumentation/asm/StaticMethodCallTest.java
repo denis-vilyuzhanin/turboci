@@ -6,13 +6,26 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
+import turboci.agent.jvm.instrumentation.CallbackCallArgumentValueGenerator;
 import turboci.agent.jvm.instrumentation.CallbackDetails;
 
 @RunWith(JUnitPlatform.class)
 public class StaticMethodCallTest {
 
+	@Mock
+	CallbackCallArgumentValueGenerator valueGenerator;
+	
 	CallbackDetails callback;
+	
+	
+	@BeforeEach
+	public void initMocks() {
+		MockitoAnnotations.initMocks(this);
+	}
 	
 	@BeforeEach
 	public void givenCallbackDetails() {
@@ -66,13 +79,25 @@ public class StaticMethodCallTest {
 	}
 	
 	@Test
-	public void methodDesciption_voidWithLongParameter() {
+	public void methodDesciption_voidWithLongArgument() {
 		//given
 		callback.setArguments(Long.MAX_VALUE);
 		//when
 		StaticMethodCall call = new StaticMethodCall(callback);	
 		//then
 		assertEquals("(J)V", call.getDescription());
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void methodDesciption_voidWithGeneratedValue() {
+		//given
+		Mockito.when(valueGenerator.getValueType()).thenReturn((Class) Integer.class);
+		callback.setArguments(valueGenerator);
+		//when
+		StaticMethodCall call = new StaticMethodCall(callback);	
+		//then
+		assertEquals("(I)V", call.getDescription());
 	}
 	
 	@Test

@@ -10,6 +10,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.util.TraceClassVisitor;
 
+import turboci.agent.jvm.instrumentation.CallbackCallArgumentValueGenerator;
 import turboci.agent.jvm.instrumentation.CallbackDetails;
 import turboci.agent.jvm.instrumentation.ClassUsageInstrumentation;
 
@@ -64,6 +65,9 @@ public class AsmClassUsageInstrumentation implements ClassUsageInstrumentation{
 			mv.visitLabel(usageCallbackLabel);
 			
 			for(Object argument : callbackMethodCall.getArguments()) {
+				if (argument instanceof CallbackCallArgumentValueGenerator) {
+					argument = ((CallbackCallArgumentValueGenerator)argument).generateNext("", "");
+				}
 				if (Boolean.class.equals(argument.getClass())) {
 					Boolean booleanValue = (Boolean) argument;
 					mv.visitInsn(booleanValue ? Opcodes.ICONST_1 : Opcodes.ICONST_0);
