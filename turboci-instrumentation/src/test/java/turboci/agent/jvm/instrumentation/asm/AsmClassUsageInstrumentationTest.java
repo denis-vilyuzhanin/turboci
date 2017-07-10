@@ -1,6 +1,7 @@
 package turboci.agent.jvm.instrumentation.asm;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -12,13 +13,20 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
+import turboci.agent.jvm.instrumentation.CallbackCallArgumentValueGenerator;
 import turboci.agent.jvm.instrumentation.CallbackDetails;
 import turboci.agent.jvm.instrumentation.test.utils.ClassUtils;
 
 @RunWith(JUnitPlatform.class)
 public class AsmClassUsageInstrumentationTest {
 
+	@Mock
+	CallbackCallArgumentValueGenerator argumentsGenerator;
+	
 	private CallbackDetails callbackDetails;
 	private AsmClassUsageInstrumentation instrumentation;
 
@@ -26,6 +34,11 @@ public class AsmClassUsageInstrumentationTest {
 
 	Class<?> instrumentedClass;
 
+	@BeforeEach
+	public void initMocks() {
+		MockitoAnnotations.initMocks(this);
+	}
+	
 	@BeforeEach
 	public void createInstrumentation() {
 		instrumentation = new AsmClassUsageInstrumentation();
@@ -78,7 +91,8 @@ public class AsmClassUsageInstrumentationTest {
 		@BeforeEach
 		public void whenCodeIsInstrumented() {
 			//init
-			callbackDetails = new CallbackDetails().setCallbackClassName(ThreadCallbackHandler.class.getName())
+			callbackDetails = new CallbackDetails()
+					.setCallbackClassName(ThreadCallbackHandler.class.getName())
 					.setMethodName("callbackWithArguments")
 					.setArguments(Arrays.asList(new Long(10), 
 							                    new Integer(20), 
@@ -98,6 +112,40 @@ public class AsmClassUsageInstrumentationTest {
 					"long:10", "int:20", "String:stringValue", "boolean:true");
 		}
 		
+	}
+	
+	@Nested
+	class WithGeneratedArguments {
+		
+		@BeforeEach
+		public void whenCodeIsInstrumentedWithGeneratedArgument() {
+			Mockito.when(argumentsGenerator.getValueType()).thenReturn((Class)String.class);
+			Mockito.when(argumentsGenerator.generateNext(anyString(), eq("<clinit>")))
+			       .thenReturn("<clinit>");
+			Mockito.when(argumentsGenerator.generateNext(anyString(), eq("<init>")))
+		       .thenReturn("<init>");
+			Mockito.when(argumentsGenerator.generateNext(anyString(), eq("method1")))
+		       .thenReturn("method1");
+			Mockito.when(argumentsGenerator.generateNext(anyString(), eq("method2")))
+		       .thenReturn("method2");
+			
+			callbackDetails = new CallbackDetails()
+					.setCallbackClassName(ThreadCallbackHandler.class.getName())
+					.setMethodName("callbackWithArgument")
+					.setArguments(argumentsGenerator);
+			
+			byte[] byteCode = ClassUtils.loadClassByteCode(AnyClass.class);
+			//instrument
+			instrumentedByteCode = instrumentation.instrument(byteCode, callbackDetails);
+			//load instrumented class
+			instrumentedClass = ClassUtils.defineClass(AnyClass.class.getName(), instrumentedByteCode);
+		}
+		
+		@Test
+		public void allCallbacksAreMadeWithGeneratedValues() throws Exception {
+			assertThatConstructorIsInstrumented(instrumentedClass, 
+					"String:<clinit>", "String:<init1>", "String:method1", "String:method2");
+		}
 	}
 
 	private void assertThatConstructorIsInstrumented(Class<?> simpleBeanClass, String...expectedArguments)
@@ -169,6 +217,10 @@ public class AsmClassUsageInstrumentationTest {
 					                    "int:" + i,
 					                    "String:" + str,
 					                    "boolean:" + b));
+		}
+		public static void callbackWithArgument(String str) {
+			isInvoked.set(true);
+			arguments.set(Arrays.asList("String:" + str));
 		}
 
 		public static boolean isInvoked() {
