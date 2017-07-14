@@ -1,6 +1,7 @@
 package turboci.agent.jvm.instrumentation.asm;
 
 import java.io.PrintWriter;
+import java.util.regex.Pattern;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -35,28 +36,45 @@ public class AsmClassUsageInstrumentation implements ClassUsageInstrumentation{
 	
 	static class AddClassUsageCallbacksTransformation extends ClassVisitor {
 
+		private static final Pattern FIND_SLASH_PATTERN = Pattern.compile("[/]");
+		private String className;
 		private StaticMethodCall callbackMethodCall;
 		
 		public AddClassUsageCallbacksTransformation(ClassVisitor cv, StaticMethodCall callbackMethodCall) {
 			super(Opcodes.ASM5, cv);
 			this.callbackMethodCall = callbackMethodCall;
 		}
+		
+		@Override
+		public void visit(int version, int access, String name, String signature, String superName,
+				String[] interfaces) {
+			this.className = FIND_SLASH_PATTERN.matcher(name).replaceAll(".");
+			super.visit(version, access, name, signature, superName, interfaces);
+		}
+
+
 
 		@Override
 		public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 			MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
-			return new AddMethodCallbackMethodTransformer(callbackMethodCall, methodVisitor);
+			return new AddMethodCallbackMethodTransformer(className, name, callbackMethodCall, methodVisitor);
 		}
 		
 	}
 	
 	static class AddMethodCallbackMethodTransformer extends MethodVisitor {
 
+		private String className;
+		private String methodName;
 		private StaticMethodCall callbackMethodCall;
 		
-		public AddMethodCallbackMethodTransformer(StaticMethodCall callbackMethodCall, MethodVisitor mv) {
+		public AddMethodCallbackMethodTransformer(String className,
+				                                  String methodName, 
+				                                  StaticMethodCall callbackMethodCall, 
+				                                  MethodVisitor mv) {
 			super(Opcodes.ASM5, mv);
 			this.callbackMethodCall = callbackMethodCall;
+			this.methodName = methodName;
 		}
 
 		@Override
@@ -65,8 +83,11 @@ public class AsmClassUsageInstrumentation implements ClassUsageInstrumentation{
 			mv.visitLabel(usageCallbackLabel);
 			
 			for(Object argument : callbackMethodCall.getArguments()) {
-				if (argument instanceof CallbackCallArgumentValueGenerator) {
-					argument = ((CallbackCallArgumentValueGenerator)argument).generateNext("", "");
+				Class<?> type = argument.getClass();
+				if (CallbackCallArgumentValueGenerator.class.isAssignableFrom(type)) {
+					CallbackCallArgumentValueGenerator generator = (CallbackCallArgumentValueGenerator) argument;
+					argument = generator.generateNext(className, methodName);
+					type = generator.getValueType();
 				}
 				if (Boolean.class.equals(argument.getClass())) {
 					Boolean booleanValue = (Boolean) argument;

@@ -6,7 +6,9 @@ import static org.mockito.Mockito.*;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -143,8 +145,13 @@ public class AsmClassUsageInstrumentationTest {
 		
 		@Test
 		public void allCallbacksAreMadeWithGeneratedValues() throws Exception {
-			assertThatConstructorIsInstrumented(instrumentedClass, 
-					"String:<clinit>", "String:<init1>", "String:method1", "String:method2");
+			assertThatMethodIsInstrumented(instrumentedClass, "method1", "String:method1");
+			assertThatMethodIsInstrumented(instrumentedClass, "method2", "String:method2");
+		}
+		
+		@Test
+		public void instrumentingConstructorWithGeneratedValue() throws Exception {
+			assertThatConstructorIsInstrumented(instrumentedClass, "String:<init>");
 		}
 	}
 
@@ -153,6 +160,10 @@ public class AsmClassUsageInstrumentationTest {
 		ThreadCallbackHandler.reset();
 		Object object = simpleBeanClass.newInstance();
 		assertTrue(ThreadCallbackHandler.isInvoked(), "Constructor isn't instrumented");
+		assertCllbackWasMadeWithArguments(expectedArguments);
+	}
+
+	private void assertCllbackWasMadeWithArguments(String... expectedArguments) {
 		if(expectedArguments.length > 0) {
 			List<String> actualArguments = ThreadCallbackHandler.getArguments();
 			assertArrayEquals(expectedArguments, actualArguments.toArray());
@@ -167,15 +178,26 @@ public class AsmClassUsageInstrumentationTest {
 			ThreadCallbackHandler.reset();
 			method.invoke(object);
 			assertTrue(ThreadCallbackHandler.isInvoked(), "Method " + method.getName() + " isn't instrumented");
+			
 		}
 	}
+	
+	private void assertThatMethodIsInstrumented(Class<?> instrumentedClass, String methodName, String... expectedArguments) throws Exception {
+		Object object = instrumentedClass.newInstance();
+		Method method = instrumentedClass.getDeclaredMethod(methodName);
+		ThreadCallbackHandler.reset();
+		method.invoke(object);
+		assertTrue(ThreadCallbackHandler.isInvoked(), "Method " + method.getName() + " isn't instrumented");
+		assertCllbackWasMadeWithArguments(expectedArguments);
+	}
 
-	private void assertThatClassInitializerIsInstrumented(byte[] instrumentedByteCode) throws Exception {
+	private void assertThatClassInitializerIsInstrumented(byte[] instrumentedByteCode, String...expectedArguments) throws Exception {
 		ThreadCallbackHandler.reset();
 		Class<?> instrumentedClass = ClassUtils.defineClass(AnyClass.class.getName(), instrumentedByteCode);
 		// Trigger class initialization because loadClass
 		instrumentedClass.getDeclaredField("STATIC_FIELD").get(null);
 		assertTrue(ThreadCallbackHandler.isInvoked(), "Class initializer isn't instrumented");
+		assertCllbackWasMadeWithArguments(expectedArguments);
 	}
 
 	public static class AnyClass {
