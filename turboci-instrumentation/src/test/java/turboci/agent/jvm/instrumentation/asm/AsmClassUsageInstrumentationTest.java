@@ -122,13 +122,13 @@ public class AsmClassUsageInstrumentationTest {
 		@BeforeEach
 		public void whenCodeIsInstrumentedWithGeneratedArgument() {
 			Mockito.when(argumentsGenerator.getValueType()).thenReturn((Class)String.class);
-			Mockito.when(argumentsGenerator.generateNext(anyString(), eq("<clinit>")))
+			Mockito.when(argumentsGenerator.generateNext(eq(AnyClass.class.getName()), eq("<clinit>")))
 			       .thenReturn("<clinit>");
-			Mockito.when(argumentsGenerator.generateNext(anyString(), eq("<init>")))
+			Mockito.when(argumentsGenerator.generateNext(eq(AnyClass.class.getName()), eq("<init>")))
 		       .thenReturn("<init>");
-			Mockito.when(argumentsGenerator.generateNext(anyString(), eq("method1")))
+			Mockito.when(argumentsGenerator.generateNext(eq(AnyClass.class.getName()), eq("method1")))
 		       .thenReturn("method1");
-			Mockito.when(argumentsGenerator.generateNext(anyString(), eq("method2")))
+			Mockito.when(argumentsGenerator.generateNext(eq(AnyClass.class.getName()), eq("method2")))
 		       .thenReturn("method2");
 			
 			callbackDetails = new CallbackDetails()

@@ -75,6 +75,7 @@ public class AsmClassUsageInstrumentation implements ClassUsageInstrumentation{
 			super(Opcodes.ASM5, mv);
 			this.callbackMethodCall = callbackMethodCall;
 			this.methodName = methodName;
+			this.className = className;
 		}
 
 		@Override
